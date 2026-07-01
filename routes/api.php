@@ -31,13 +31,13 @@ use Illuminate\Support\Facades\Route;
 // AUTH — Routes publiques (sans authentification)
 // ─────────────────────────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login',    [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register']); //ok najem n7assen 
+    Route::post('/login',    [AuthController::class, 'login']); //ok
 
     // Routes protégées par Sanctum
     Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/me',      [AuthController::class, 'me']);
+        Route::post('/logout', [AuthController::class, 'logout']); //ok
+        Route::get('/me',      [AuthController::class, 'me']); //ok
     });
 });
 
@@ -48,60 +48,60 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ───────── PROFILE ─────────
     Route::prefix('profile')->group(function () {
-        Route::get('/',          [ProfileController::class, 'show']);
-        Route::put('/',          [ProfileController::class, 'update']);
-        Route::put('/password',  [ProfileController::class, 'updatePassword']);
-        Route::post('/photo',    [ProfileController::class, 'uploadPhoto']);
+        Route::get('/',          [ProfileController::class, 'show']); //ok, same as /me in auth
+        Route::put('/',          [ProfileController::class, 'update']); //ok najem n7assen 
+        Route::put('/password',  [ProfileController::class, 'updatePassword']); //ok
+        Route::post('/photo',    [ProfileController::class, 'uploadPhoto']); //ok
     });
 
-    // ───────── USERS ─────────
+    // ───────── USERS ───────── 2
     Route::prefix('users')->group(function () {
         // Listing : admin, chef_regiment, chef_groupe (scope dans le controller)
-        Route::get('/', [UserController::class, 'index'])
+        Route::get('/', [UserController::class, 'index']) // !!!
             ->middleware('CheckUser:admin,chef_regiment,chef_groupe');
 
         // Détail : admin, CR, CG, candidat (lui-même) — Policy vérifie le scope
-        Route::get('/{user}',        [UserController::class, 'show']);
-        Route::put('/{user}',        [UserController::class, 'update'])
+        Route::get('/{user}',        [UserController::class, 'show']); // !!!
+        Route::put('/{user}',        [UserController::class, 'update']) //ok
             ->middleware('CheckUser:admin');
-        Route::delete('/{user}',     [UserController::class, 'destroy'])
+        Route::delete('/{user}',     [UserController::class, 'destroy']) //ok
             ->middleware('CheckUser:admin');
-        Route::get('/{user}/grade',  [UserController::class, 'showGrade']);
-        Route::patch('/{user}/grade', [UserController::class, 'assignGrade'])
+        Route::get('/{user}/grade',  [UserController::class, 'showGrade']); //ok
+        Route::patch('/{user}/grade', [UserController::class, 'assignGrade']) //ok
             ->middleware('CheckUser:admin,chef_groupe');
     });
 
     // ───────── VILLES ─────────
     Route::prefix('villes')->group(function () {
-        Route::get('/',                      [VilleController::class, 'index']);
-        Route::post('/',                     [VilleController::class, 'store'])
+        Route::get('/',                      [VilleController::class, 'index']); //ok
+        Route::post('/',                     [VilleController::class, 'store']) //ok
             ->middleware('CheckUser:admin');
-        Route::get('/{ville}',              [VilleController::class, 'show']);
-        Route::put('/{ville}',              [VilleController::class, 'update'])
+        Route::get('/{ville}',              [VilleController::class, 'show']); //ok
+        Route::put('/{ville}',              [VilleController::class, 'update']) //ok
             ->middleware('CheckUser:admin');
-        Route::delete('/{ville}',           [VilleController::class, 'destroy'])
+        Route::delete('/{ville}',           [VilleController::class, 'destroy']) //ok (cant delete when users, regiments are linked)
             ->middleware('CheckUser:admin');
         Route::get('/{ville}/regiments',    [VilleController::class, 'regiments']);
         Route::get('/{ville}/events',       [VilleController::class, 'events']);
-        Route::get('/{ville}/users',        [VilleController::class, 'users'])
+        Route::get('/{ville}/users',        [VilleController::class, 'users']) //ok
             ->middleware('CheckUser:admin');
     });
 
     // ───────── REGIMENTS ─────────
     Route::prefix('regiments')->group(function () {
-        Route::get('/',                          [RegimentController::class, 'index']);
-        Route::post('/',                         [RegimentController::class, 'store'])
+        Route::get('/',                          [RegimentController::class, 'index']); //ok
+        Route::post('/',                         [RegimentController::class, 'store']) //ok
             ->middleware('CheckUser:admin');
-        Route::get('/{regiment}',               [RegimentController::class, 'show']);
-        Route::put('/{regiment}',               [RegimentController::class, 'update'])
+        Route::get('/{regiment}',               [RegimentController::class, 'show']); //ok
+        Route::put('/{regiment}',               [RegimentController::class, 'update']) //ok
             ->middleware('CheckUser:admin');
-        Route::delete('/{regiment}',            [RegimentController::class, 'destroy'])
+        Route::delete('/{regiment}',            [RegimentController::class, 'destroy']) //ok (cant delete when groups and events are linked, users and chef will be detached if deleted)
             ->middleware('CheckUser:admin');
         Route::get('/{regiment}/groups',        [RegimentController::class, 'groups']);
         Route::get('/{regiment}/events',        [RegimentController::class, 'events']);
-        Route::get('/{regiment}/users',         [RegimentController::class, 'users'])
+        Route::get('/{regiment}/users',         [RegimentController::class, 'users']) //ok (only admin can check and the chef of this regiment, other chefs can't check other regiments users)
             ->middleware('CheckUser:admin,chef_regiment');
-        Route::patch('/{regiment}/chef',        [RegimentController::class, 'assignChef'])
+        Route::patch('/{regiment}/chef',        [RegimentController::class, 'assignChef']) //ok
             ->middleware('CheckUser:admin');
     });
 
@@ -131,13 +131,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ───────── GRADES ─────────
     Route::prefix('grades')->group(function () {
-        Route::get('/',           [GradeController::class, 'index']);
-        Route::post('/',          [GradeController::class, 'store'])
+        Route::get('/',           [GradeController::class, 'index']); //ok
+        Route::post('/',          [GradeController::class, 'store']) //ok
             ->middleware('CheckUser:admin');
-        Route::get('/{grade}',   [GradeController::class, 'show']);
-        Route::put('/{grade}',   [GradeController::class, 'update'])
+        Route::get('/{grade}',   [GradeController::class, 'show']); //ok
+        Route::post('/{grade}',   [GradeController::class, 'update']) //ok  had to change from put to update to get rid of form-data bugs
             ->middleware('CheckUser:admin');
-        Route::delete('/{grade}',[GradeController::class, 'destroy'])
+        Route::delete('/{grade}',[GradeController::class, 'destroy']) //ok (cascade, when i delete a grade linked users will have null in grade_id)
             ->middleware('CheckUser:admin');
     });
 
@@ -160,15 +160,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ───────── CATEGORIES ─────────
     Route::prefix('categories')->group(function () {
-        Route::get('/',                        [CategoryController::class, 'index']);
-        Route::post('/',                       [CategoryController::class, 'store'])
+        Route::get('/',                        [CategoryController::class, 'index']); //ok
+        Route::post('/',                       [CategoryController::class, 'store']) //ok
             ->middleware('CheckUser:admin');
-        Route::get('/{category}',             [CategoryController::class, 'show']);
+        Route::get('/{category}',             [CategoryController::class, 'show']); //ok
         Route::put('/{category}',             [CategoryController::class, 'update'])
             ->middleware('CheckUser:admin');
-        Route::delete('/{category}',          [CategoryController::class, 'destroy'])
+        Route::delete('/{category}',          [CategoryController::class, 'destroy']) //ok
             ->middleware('CheckUser:admin');
-        Route::get('/{category}/guides',      [CategoryController::class, 'guides']);
+        Route::get('/{category}/guides',      [CategoryController::class, 'guides']); //ok
     });
 
     // ───────── SONGS ─────────

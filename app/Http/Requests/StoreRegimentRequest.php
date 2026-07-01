@@ -16,7 +16,7 @@ class StoreRegimentRequest extends FormRequest
         return [
             'nom'      => 'required|string|max:150',
             'ville_id' => 'required|exists:villes,id',
-            'chef_id'  => 'nullable|exists:users,id',
+            //'chef_id'  => 'nullable|exists:users,id',
         ];
     }
 }

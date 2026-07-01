@@ -11,17 +11,20 @@ use App\Http\Resources\RegimentResource;
 use App\Http\Resources\UserResource;
 use App\Models\Regiment;
 use App\Models\User;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class RegimentController extends Controller
 {
+    use AuthorizesRequests;
+
     /**
      * Lister tous les régiments.
      */
     public function index(Request $request): JsonResponse
     {
-        $perPage   = min($request->query('per_page', 15), 50);
+        $perPage = min($request->query('per_page', 15), 50);
         $regiments = Regiment::with(['ville', 'chef'])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
@@ -36,7 +39,7 @@ class RegimentController extends Controller
     {
         $regiment = Regiment::create($request->validated());
 
-        return response()->json(new RegimentResource($regiment->load('ville', 'chef')), 201);
+        return response()->json(new RegimentResource($regiment->load('ville')), 201);
     }
 
     /**
@@ -64,9 +67,41 @@ class RegimentController extends Controller
      */
     public function destroy(Regiment $regiment): JsonResponse
     {
+        // Vérifier s'il y a des groupes
+        if ($regiment->groups()->exists()) {
+            return response()->json([
+                'message' => 'Impossible de supprimer le régiment car il contient des groupes.',
+            ], 409);
+        }
+        // Vérifier s'il y a des événements
+        if ($regiment->events()->exists()) {
+            return response()->json([
+                'message' => 'Impossible de supprimer le régiment car il contient des événements.',
+            ], 409);
+        }
+
+        // Libérer tous les utilisateurs du régiment
+        User::where('regiment_id', $regiment->id)
+            ->update([
+                'regiment_id' => null,
+                'role' => 'candidat', // optionnel selon ton système
+            ]);
+
+        // Libérer le chef aussi (si tu veux être explicite)
+        if ($regiment->chef_id) {
+            User::where('id', $regiment->chef_id)
+                ->update([
+                    'regiment_id' => null,
+                    'role' => 'candidat',
+                ]);
+        }
+
+        // Supprimer le régiment
         $regiment->delete();
 
-        return response()->json(['message' => 'Régiment supprimé.']);
+        return response()->json([
+            'message' => 'Régiment supprimé et utilisateurs détachés.',
+        ]);
     }
 
     /**
@@ -75,7 +110,7 @@ class RegimentController extends Controller
     public function groups(Request $request, Regiment $regiment): JsonResponse
     {
         $perPage = min($request->query('per_page', 15), 50);
-        $groups  = $regiment->groups()
+        $groups = $regiment->groups()
             ->with(['chef', 'assistant'])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
@@ -89,7 +124,7 @@ class RegimentController extends Controller
     public function events(Request $request, Regiment $regiment): JsonResponse
     {
         $perPage = min($request->query('per_page', 15), 50);
-        $events  = $regiment->events()
+        $events = $regiment->events()
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
@@ -105,7 +140,7 @@ class RegimentController extends Controller
         $this->authorize('viewMembers', $regiment);
 
         $perPage = min($request->query('per_page', 15), 50);
-        $users   = $regiment->users()
+        $users = $regiment->users()
             ->with('grade')
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
@@ -124,6 +159,15 @@ class RegimentController extends Controller
             'chef_id' => 'required|exists:users,id',
         ]);
 
+        // Ancien chef
+        $oldChef = User::where('id', $regiment->chef_id)->first();
+        if ($oldChef) {
+            $oldChef->update([
+                'role' => 'candidat',   // ou rôle par défaut
+                'regiment_id' => null,
+            ]);
+        }
+
         // Mettre à jour le rôle de l'utilisateur désigné comme chef
         $chef = User::findOrFail($validated['chef_id']);
         $chef->update(['role' => 'chef_regiment', 'regiment_id' => $regiment->id]);
@@ -131,7 +175,7 @@ class RegimentController extends Controller
         $regiment->update(['chef_id' => $validated['chef_id']]);
 
         return response()->json([
-            'message'  => 'Chef de régiment affecté.',
+            'message' => 'Chef de régiment affecté.',
             'regiment' => new RegimentResource($regiment->fresh('chef')),
         ]);
     }

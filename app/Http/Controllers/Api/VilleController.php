@@ -20,8 +20,8 @@ class VilleController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $perPage = min($request->query('per_page', 15), 50);
-        $villes  = Ville::orderBy('created_at', 'desc')->paginate($perPage);
+        $perPage = min($request->query('per_page', 24), 50);
+        $villes  = Ville::orderBy('created_at', 'asc')->paginate($perPage);
 
         return response()->json(VilleResource::collection($villes));
     }

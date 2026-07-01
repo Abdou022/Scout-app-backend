@@ -16,7 +16,7 @@ class UpdateRegimentRequest extends FormRequest
         return [
             'nom'      => 'sometimes|string|max:150',
             'ville_id' => 'sometimes|exists:villes,id',
-            'chef_id'  => 'nullable|exists:users,id',
+            //'chef_id'  => 'nullable|exists:users,id',
         ];
     }
 }

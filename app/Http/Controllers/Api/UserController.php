@@ -7,9 +7,12 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class UserController extends Controller
 {
+
+    use AuthorizesRequests;
     /**
      * Lister les utilisateurs selon le scope du rôle authentifié.
      * Admin : tous ; Chef régiment : son régiment ; Chef groupe : son groupe.

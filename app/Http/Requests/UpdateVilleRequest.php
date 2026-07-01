@@ -14,7 +14,7 @@ class UpdateVilleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nom' => 'sometimes|string|max:150|unique:villes,nom,' . $this->route('ville'),
+            'nom' => 'sometimes|string|max:150|unique:villes,nom,' . $this->route('ville')->id,
         ];
     }
 }
